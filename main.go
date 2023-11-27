@@ -2,13 +2,16 @@ package main
 
 import (
 	"fmt"
+	tm "github.com/buger/goterm"
 	"math/rand"
+	"os"
 )
 
 type Board []int
 
 const Player = 1
 const Computer = 2
+const Draw = 3
 const PlayerToken = 1
 const ComputerToken = 10
 const BoardWidth = 3
@@ -20,28 +23,42 @@ const BoardHeight = 3
 
 func main() {
 	board := Board{0, 0, 0, 0, 0, 0, 0, 0, 0}
-	for isGameOver(board) == false {
+	for {
+		printGameResultAndExitIfFinished(board)
 		printBoard(board)
-		c := getUserMove()
+		c := getUserMove(board)
 		board = placeTokenOnBoard(board, c, Player)
 		printBoard(board)
-		if isGameOver(board) {
-			fmt.Println("Player won")
-			return
-		}
+		printGameResultAndExitIfFinished(board)
 		c = getComputerMove(board)
 		board = placeTokenOnBoard(board, c, Computer)
 		printBoard(board)
-		if isGameOver(board) {
-			fmt.Println("Computer won")
-			return
-		}
+		printGameResultAndExitIfFinished(board)
 	}
 }
 
+func printGameResultAndExitIfFinished(board Board) {
+	gameOver, winner := isGameOver(board)
+	if gameOver {
+		switch winner {
+		case Player:
+			fmt.Println("Player won")
+		case Computer:
+			fmt.Println("Computer won")
+		default:
+			fmt.Println("It is a draw")
+		}
+		os.Exit(0)
+	}
+	return
+}
+
 // getUserMove gets the move of the user
-func getUserMove() int {
+func getUserMove(board Board) int {
 	var i int
+	possibleMoves := getAvailableSpotsOnBoard(board)
+	tm.Print("Your move: ", possibleMoves, " ")
+	tm.Flush()
 	fmt.Scanln(&i)
 	return i
 
@@ -58,10 +75,14 @@ func getComputerMove(board Board) int {
 // 4 | 5 | 6
 // 7 | 8 | 9
 func printBoard(board Board) {
+	tm.Clear()
+	tm.MoveCursor(1, 1)
 	for i := 0; i < 9; i += 3 {
-		fmt.Println(getBoardChar(board[i]), " | ", getBoardChar(board[i+1]), " | ", getBoardChar(board[i+2]))
+		tm.Print(getBoardChar(board[i]), " | ", getBoardChar(board[i+1]), " | ", getBoardChar(board[i+2]))
+		tm.Printf("     %d %d %d\n", i, i+1, i+2)
 	}
-	fmt.Println()
+	tm.Println()
+	tm.Flush()
 }
 
 // getBoardChar prints one field of the tic tac toe board
@@ -94,28 +115,43 @@ func placeTokenOnBoard(board Board, cod int, player int) Board {
 // isGameOver returns true if no more moves are possible
 // condition 1: one player has won
 // condition 2: the board is filled
-func isGameOver(board Board) bool {
+func isGameOver(board Board) (bool, int) {
 	for i := 0; i < len(board); i += 3 {
 		sum := board[i] + board[i+1] + board[i+2]
-		if sum == 3 || sum == 30 {
-			return true
+		if sum == 3 {
+			return true, Player
+		}
+		if sum == 30 {
+			return true, Computer
 		}
 	}
 	for i := 0; i < BoardWidth; i++ {
 		sum := board[i] + board[i+3] + board[i+6]
-		if sum == 3 || sum == 30 {
-			return true
+		if sum == 3 {
+			return true, Player
+		}
+		if sum == 30 {
+			return true, Computer
 		}
 	}
 	sum := board[0] + board[4] + board[8]
-	if sum == 3 || sum == 30 {
-		return true
+	if sum == 3 {
+		return true, Player
+	}
+	if sum == 30 {
+		return true, Computer
 	}
 	sum = board[2] + board[4] + board[6]
-	if sum == 3 || sum == 30 {
-		return true
+	if sum == 3 {
+		return true, Player
 	}
-	return false
+	if sum == 30 {
+		return true, Computer
+	}
+	if len(getAvailableSpotsOnBoard(board)) == 0 {
+		return true, Draw
+	}
+	return false, 0
 }
 
 // getAvailableSpotsOnBoard returns all available spots on the board
