@@ -5,6 +5,7 @@ import (
 	tm "github.com/buger/goterm"
 	"math/rand"
 	"os"
+	"strings"
 )
 
 type Board []int
@@ -23,7 +24,43 @@ const BoardHeight = 3
 
 func main() {
 	board := Board{0, 0, 0, 0, 0, 0, 0, 0, 0}
+	fmt.Println("Möchtest du anfangen ja oder nein?")
+	var i string
+	fmt.Scanln(&i)
+	i = strings.ToLower(i)
+	if i == "ja" {
+		for {
+			printGameResultAndExitIfFinished(board)
+			printBoard(board)
+			c := getUserMove(board)
+			board = placeTokenOnBoard(board, c, Player)
+			printBoard(board)
+			printGameResultAndExitIfFinished(board)
+			c = getComputerMove(board)
+			board = placeTokenOnBoard(board, c, Computer)
+			printBoard(board)
+			printGameResultAndExitIfFinished(board)
+		}
+	}
+	if i == "nein" {
+		for {
+			printGameResultAndExitIfFinished(board)
+			printBoard(board)
+			c := getComputerMove(board)
+			board = placeTokenOnBoard(board, c, Computer)
+			printBoard(board)
+			printGameResultAndExitIfFinished(board)
+			c = getUserMove(board)
+			board = placeTokenOnBoard(board, c, Player)
+			printBoard(board)
+			printGameResultAndExitIfFinished(board)
+		}
+	}
+
 	for {
+		var i bool
+		fmt.Scanln(&i)
+
 		printGameResultAndExitIfFinished(board)
 		printBoard(board)
 		c := getUserMove(board)
