@@ -12,7 +12,7 @@ type Board []int
 const Player = 1
 const Computer = 2
 const Draw = 3
-const PlayerToken = 1
+const PlayerToken = 50
 const ComputerToken = 10
 const BoardWidth = 3
 const BoardHeight = 3
@@ -66,8 +66,23 @@ func getUserMove(board Board) int {
 
 // getComputerMove returns the move done by the computer
 func getComputerMove(board Board) int {
-	spots := getAvailableSpotsOnBoard(board)
-	return spots[rand.Intn(len(spots))]
+	// check if computer could win
+	// check if player could win
+	// try all available spots, for each check
+	//   could player win after next move => avoid
+	//   could computer win after next move => play
+	// choose random move
+	trueOrFalseCom, cCom := boardsForComputer(board)
+	if trueOrFalseCom == true {
+		return cCom
+	}
+	trueOrFlalsePl, cPl := noWinForPlayerBoards(board)
+	if trueOrFlalsePl == true {
+		return cPl
+	} else {
+		return cPl
+	}
+
 }
 
 // printBoard prints a tic tac toe board
@@ -115,10 +130,11 @@ func placeTokenOnBoard(board Board, cod int, player int) Board {
 // isGameOver returns true if no more moves are possible
 // condition 1: one player has won
 // condition 2: the board is filled
+// returns the winning player or draw
 func isGameOver(board Board) (bool, int) {
 	for i := 0; i < len(board); i += 3 {
 		sum := board[i] + board[i+1] + board[i+2]
-		if sum == 3 {
+		if sum == 150 {
 			return true, Player
 		}
 		if sum == 30 {
@@ -127,7 +143,7 @@ func isGameOver(board Board) (bool, int) {
 	}
 	for i := 0; i < BoardWidth; i++ {
 		sum := board[i] + board[i+3] + board[i+6]
-		if sum == 3 {
+		if sum == 150 {
 			return true, Player
 		}
 		if sum == 30 {
@@ -135,14 +151,14 @@ func isGameOver(board Board) (bool, int) {
 		}
 	}
 	sum := board[0] + board[4] + board[8]
-	if sum == 3 {
+	if sum == 150 {
 		return true, Player
 	}
 	if sum == 30 {
 		return true, Computer
 	}
 	sum = board[2] + board[4] + board[6]
-	if sum == 3 {
+	if sum == 150 {
 		return true, Player
 	}
 	if sum == 30 {
@@ -163,4 +179,34 @@ func getAvailableSpotsOnBoard(board Board) []int {
 		}
 	}
 	return spots
+}
+
+// boardsForComputer generates all possible boards from the next move to determine the best one
+func boardsForComputer(board Board) (bool, int) {
+	spots := getAvailableSpotsOnBoard(board)
+	var testBoard = make([]int, len(board))
+	for _, i := range spots {
+		copy(testBoard, board)
+		testBoard = placeTokenOnBoard(testBoard, i, Computer)
+		gameOver, winner := isGameOver(testBoard)
+		if gameOver == true && winner == Computer {
+			return true, i
+		}
+	}
+	return false, spots[rand.Intn(len(spots))]
+}
+
+// if boardsForComputer doesn't return true noWinForPlayerBoards will determine a move to block the win of the player
+func noWinForPlayerBoards(board Board) (bool, int) {
+	spots := getAvailableSpotsOnBoard(board)
+	var testBoard = make([]int, len(board))
+	for _, i := range spots {
+		copy(testBoard, board)
+		testBoard = placeTokenOnBoard(testBoard, i, Player)
+		gameOver, winner := isGameOver(testBoard)
+		if gameOver == true && winner == Player {
+			return true, i
+		}
+	}
+	return false, spots[rand.Intn(len(spots))]
 }
